@@ -1,6 +1,9 @@
 const express = require('express')
+const cookieParser = require('cookie-parser');
 
 const app = express()
+app.use(cookieParser());
+app.use(express.json());
 
 app.get("/", (req,res )=>{
     res.send("hello world")
@@ -10,8 +13,3 @@ module.exports = app
 
 
 
-
-// biswaganguly10_db_user
-// VkLdMIsjbt2Ou5SY
-
-// mongodb+srv://biswaganguly10_db_user:VkLdMIsjbt2Ou5SY@zomato.xormgum.mongodb.net/?retryWrites=true&w=majority&appName=zomato
