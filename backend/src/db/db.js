@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
-
+require('dotenv').config()
 
 function connectDb(){
-    mongoose.connect('mongodb+srv://biswaganguly10_db_user:VkLdMIsjbt2Ou5SY@zomato.xormgum.mongodb.net/?retryWrites=true&w=majority&appName=zomato')
+    mongoose.connect(process.env.MONGODB_URI)
     .then(()=>console.log('MongoDB connected to backend'))
     .catch((err)=>console.log('MongoDb connection failed', err))
 }
