@@ -6,20 +6,28 @@ const { v4: uuid } = require("uuid")
 
 
 async function createFood(req, res) {
-    const fileUploadResult = await storageService.uploadFile(req.file.buffer, uuid())
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "Video file is required" })
+        }
 
-    const foodItem = await foodModel.create({
-        name: req.body.name,
-        description: req.body.description,
-        video: fileUploadResult.url,
-        foodPartner: req.foodPartner._id
-    })
+        const fileUploadResult = await storageService.uploadFile(req.file.buffer, uuid())
 
-    res.status(201).json({
-        message: "food created successfully",
-        food: foodItem
-    })
+        const foodItem = await foodModel.create({
+            name: req.body.name,
+            description: req.body.description,
+            video: fileUploadResult.url,
+            foodPartner: req.foodPartner._id
+        })
 
+        res.status(201).json({
+            message: "food created successfully",
+            food: foodItem
+        })
+    } catch (error) {
+        console.error('Error creating food:', error)
+        res.status(500).json({ message: "Internal server error" })
+    }
 }
 
 async function getFoodItems(req, res) {

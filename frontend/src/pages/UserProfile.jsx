@@ -45,9 +45,7 @@ function UserProfile() {
             </div>
             
             <div className="mt-6 space-x-4">
-              <button className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
-                Update Profile
-              </button>
+              
               <button 
                 onClick={handleLogout}
                 className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"

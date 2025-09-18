@@ -1,4 +1,5 @@
 const userModel = require("../models/user.model")
+const foodPartnerModel = require("../models/foodpartner.model")
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -106,46 +107,48 @@ async function logoutUser(req, res){
 }
 
 async function registerFoodPartner(req, res) {
-    const { name, email, password, phone, address, contactName } = req.body;
+    try {
+        const { name, email, password, phone, address, contactName } = req.body;
 
-    const isAccountAlreadyExists = await foodPartnerModel.findOne({
-        email
-    })
-
-    if (isAccountAlreadyExists) {
-        return res.status(400).json({
-            message: "Food partner account already exists"
+        const isAccountAlreadyExists = await foodPartnerModel.findOne({
+            email
         })
-    }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const foodPartner = await foodPartnerModel.create({
-        name,
-        email,
-        password: hashedPassword,
-        phone,
-        address,
-        contactName
-    })
-
-    const token = jwt.sign({
-        id: foodPartner._id,
-    }, process.env.JWT_SECRET)
-
-    res.cookie("token", token)
-
-    res.status(201).json({
-        message: "Food partner registered successfully",
-        foodPartner: {
-            _id: foodPartner._id,
-            email: foodPartner.email,
-            name: foodPartner.name,
-            address: foodPartner.address,
-            contactName: foodPartner.contactName,
-            phone: foodPartner.phone
+        if (isAccountAlreadyExists) {
+            return res.status(400).json({
+                message: "Food partner account already exists"
+            })
         }
-    })
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const foodPartner = await foodPartnerModel.create({
+            name,
+            email,
+            password: hashedPassword,
+            phone: phone || 'Not provided',
+            address: address || 'Not provided',
+            contactName: contactName || name
+        })
+
+        const token = jwt.sign({
+            id: foodPartner._id,
+        }, process.env.JWT_SECRET)
+
+        res.cookie("token", token)
+
+        res.status(201).json({
+            message: "Food partner registered successfully",
+            foodPartner: {
+                _id: foodPartner._id,
+                email: foodPartner.email,
+                name: foodPartner.name
+            }
+        })
+    } catch (error) {
+        console.error('Food partner registration error:', error)
+        res.status(500).json({ message: "Internal server error" })
+    }
 }
 
 async function loginFoodPartner(req, res) {
@@ -193,11 +196,56 @@ async function logoutFoodPartner(req, res){
     });
 }
 
+async function getCurrentUser(req, res) {
+    try {
+        const token = req.cookies.token;
+        
+        if (!token) {
+            return res.status(401).json({ message: "No token provided" });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Try to find as user first
+        const user = await userModel.findById(decoded.id);
+        if (user) {
+            return res.status(200).json({
+                user: {
+                    _id: user._id,
+                    email: user.email,
+                    fullName: user.fullName
+                },
+                userType: 'user'
+            });
+        }
+        
+        // Try to find as food partner
+        const foodPartner = await foodPartnerModel.findById(decoded.id);
+        if (foodPartner) {
+            return res.status(200).json({
+                user: {
+                    _id: foodPartner._id,
+                    email: foodPartner.email,
+                    name: foodPartner.name
+                },
+                userType: 'foodPartner'
+            });
+        }
+        
+        return res.status(404).json({ message: "User not found" });
+        
+    } catch (error) {
+        console.error('Get current user error:', error);
+        res.status(401).json({ message: "Invalid token" });
+    }
+}
+
 module.exports = {
     registerUser,
     loginUser,
     logoutUser,
     registerFoodPartner,
     loginFoodPartner,
-    logoutFoodPartner
+    logoutFoodPartner,
+    getCurrentUser
 }

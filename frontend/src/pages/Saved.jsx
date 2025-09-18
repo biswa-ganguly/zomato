@@ -1,23 +1,44 @@
-import React from 'react'
-import FoodCard from '../components/FoodCard'
+import React, { useEffect, useState } from 'react'
 
-function Saved() {
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Saved Foods</h1>
-        <p className="text-gray-600 mt-2">Your favorite recipes and food videos</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="col-span-full text-center py-12">
-          <div className="text-6xl mb-4">🔖</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No saved foods yet</h3>
-          <p className="text-gray-600">Start exploring and save your favorite recipes!</p>
-        </div>
-      </div>
-    </div>
-  )
+import axios from 'axios'
+import ReelFeed from '../components/ReelFeed'
+
+
+const Saved = () => {
+    const [ videos, setVideos ] = useState([])
+
+    useEffect(() => {
+        axios.get("http://localhost:3000/api/food/save", { withCredentials: true })
+            .then(response => {
+                const savedFoods = response.data.savedFoods.map((item) => ({
+                    _id: item.food._id,
+                    video: item.food.video,
+                    description: item.food.description,
+                    likeCount: item.food.likeCount,
+                    savesCount: item.food.savesCount,
+                    commentsCount: item.food.commentsCount,
+                    foodPartner: item.food.foodPartner,
+                }))
+                setVideos(savedFoods)
+            })
+    }, [])
+
+    const removeSaved = async (item) => {
+        try {
+            await axios.post("http://localhost:3000/api/food/save", { foodId: item._id }, { withCredentials: true })
+            setVideos((prev) => prev.map((v) => v._id === item._id ? { ...v, savesCount: Math.max(0, (v.savesCount ?? 1) - 1) } : v))
+        } catch {
+            // noop
+        }
+    }
+
+    return (
+        <ReelFeed
+            items={videos}
+            onSave={removeSaved}
+            emptyMessage="No saved videos yet."
+        />
+    )
 }
 
 export default Saved
