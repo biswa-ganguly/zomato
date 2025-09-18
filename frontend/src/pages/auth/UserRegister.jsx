@@ -2,10 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const UserRegister = () => {
 
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,7 +28,7 @@ const UserRegister = () => {
         })
 
         console.log(response.data);
-
+        login(response.data.user, 'user');
         navigate("/")
 
     };
